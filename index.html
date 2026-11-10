@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SM Online Shop - Beauty & Lifestyle</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React & ReactDOM CDN -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX compilation in browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-pink-50/30 text-gray-800 font-sans pb-12">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { 
+          ShoppingBag, Trash2, Plus, Minus, Search, 
+          ShieldCheck, Truck, RefreshCw, Star, ArrowRight, X, Menu, Settings, Heart, Sparkles, Facebook, Instagram, MessageCircle, CheckCircle2, Printer, Camera, Lock, Key, Shield, Radio, Users, Eye
+        } = lucide;
+
+        function App() {
+          const [activeTab, setActiveTab] = useState('shop');
+          const [cart, setCart] = useState(() => {
+            const saved = localStorage.getItem('sm_cart');
+            return saved ? JSON.parse(saved) : [];
+          });
+          const [wishlist, setWishlist] = useState(() => {
+            const saved = localStorage.getItem('sm_wishlist');
+            return saved ? JSON.parse(saved) : [];
+          });
+          const [searchQuery, setSearchQuery] = useState('');
+          const [selectedCategory, setSelectedCategory] = useState('All');
+          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+          const [checkoutModal, setCheckoutModal] = useState(false);
+          const [orderSuccess, setOrderSuccess] = useState(false);
+          const [lastOrderDetails, setLastOrderDetails] = useState(null);
+
+          const [customerName, setCustomerName] = useState('');
+          const [customerPhone, setCustomerPhone] = useState('');
+          const [customerAddress, setCustomerAddress] = useState('');
+          const [paymentMethod, setPaymentMethod] = useState('COD');
+          const [trxId, setTrxId] = useState('');
+
+          const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+          const [adminUsername, setAdminUsername] = useState('');
+          const [adminPassword, setAdminPassword] = useState('');
+          const [adminPin, setAdminPin] = useState('');
+          const [loginError, setLoginError] = useState('');
+
+          const [trackInput, setTrackInput] = useState('');
+          const [trackResult, setTrackResult] = useState(null);
+
+          const [isSpinning, setIsSpinning] = useState(false);
+          const [spinMessage, setSpinMessage] = useState('আপনার ডিসকাউন্ট স্পিন করতে নিচের বাটনে চাপ দিন!');
+          const [appliedCoupon, setAppliedCoupon] = useState('');
+          const [couponInput, setCouponInput] = useState('');
+          const [couponError, setCouponError] = useState('');
+          const [discountPercent, setDiscountPercent] = useState(0);
+          const [isFreeShipping, setIsFreeShipping] = useState(false);
+
+          const [isChatOpen, setIsChatOpen] = useState(false);
+          const [chatMessages, setChatMessages] = useState([
+            { sender: 'support', text: 'আসসালামু আলাইকুম! SM Online Shop-এ আপনাকে স্বাগতম। পেমেন্ট, ডেলিভারি বা স্কিনকেয়ার নিয়ে যেকোনো প্রশ্ন করতে পারেন।' }
+          ]);
+          const [chatInput, setChatInput] = useState('');
+
+          const [products, setProducts] = useState([
+            {
+              id: 1,
+              name: 'Premium Chiffon Hijab with Inner Cap',
+              price: 650,
+              oldPrice: 850,
+              category: 'Hijab & Abaya',
+              image: 'https://images.unsplash.com/photo-1584273143981-41c073dfe8f8?auto=format&fit=crop&w=600&q=80',
+              rating: 4.9,
+              reviewsCount: 38,
+              description: 'Soft, breathable premium chiffon hijab paired with a matching comfortable inner cap.'
+            },
+            {
+              id: 2,
+              name: 'Embroidered Black Designer Abaya',
+              price: 3200,
+              oldPrice: 3800,
+              category: 'Hijab & Abaya',
+              image: 'https://images.unsplash.com/photo-1617627143750-d86bc21e42bb?auto=format&fit=crop&w=600&q=80',
+              rating: 4.8,
+              reviewsCount: 52,
+              description: 'Elegant black abaya featuring delicate gold embroidery on sleeves and front border.'
+            },
+            {
+              id: 3,
+              name: 'Floral Printed Georgette Kurti',
+              price: 1850,
+              oldPrice: 2200,
+              category: 'Women Fashion',
+              image: 'https://images.unsplash.com/photo-1608256246200-53e635b5b65f?auto=format&fit=crop&w=600&q=80',
+              rating: 4.7,
+              reviewsCount: 24,
+              description: 'Stylish casual floral printed georgette kurti for everyday elegance and comfort.'
+            },
+            {
+              id: 4,
+              name: 'Matte Liquid Lipstick Collection',
+              price: 950,
+              oldPrice: 1200,
+              category: 'Cosmetics',
+              image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=600&q=80',
+              rating: 4.9,
+              reviewsCount: 89,
+              description: 'Long-lasting waterproof matte liquid lipstick set with vibrant, rich pigmentation.'
+            }
+          ]);
+
+          const [zoomedImage, setZoomedImage] = useState(null);
+
+          useEffect(() => {
+            localStorage.setItem('sm_cart', JSON.stringify(cart));
+          }, [cart]);
+
+          useEffect(() => {
+            localStorage.setItem('sm_wishlist', JSON.stringify(wishlist));
+          }, [wishlist]);
+
+          const addToCart = (product) => {
+            setCart(prev => {
+              const existing = prev.find(item => item.id === product.id);
+              if (existing) {
+                return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+              }
+              return [...prev, { ...product, quantity: 1 }];
+            });
+            alert('কার্ডে সফলভাবে যোগ করা হয়েছে!');
+          };
+
+          const toggleWishlist = (product) => {
+            setWishlist(prev => {
+              const exists = prev.find(item => item.id === product.id);
+              if (exists) return prev.filter(item => item.id !== product.id);
+              return [...prev, product];
+            });
+          };
+
+          const updateQuantity = (id, delta) => {
+            setCart(prev => prev.map(item => {
+              if (item.id === id) {
+                const newQty = item.quantity + delta;
+                return newQty > 0 ? { ...item, quantity: newQty } : null;
+              }
+              return item;
+            }).filter(Boolean));
+          };
+
+          const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+          const discountAmount = Math.round((subtotal * discountPercent) / 100);
+          const shipping = isFreeShipping ? 0 : (subtotal > 0 ? 120 : 0);
+          const total = Math.max(0, subtotal - discountAmount + shipping);
+
+          const filteredProducts = products.filter(product => {
+            const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesCat = selectedCategory === 'All' || product.category === selectedCategory;
+            return matchesSearch && matchesCat;
+          });
+
+          return (
+            <div className="min-h-screen flex flex-col justify-between">
+              {/* HEADER */}
+              <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-pink-100 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div onClick={() => setActiveTab('shop')} className="cursor-pointer flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white font-black flex items-center justify-center text-lg shadow-md">
+                        SM
+                      </div>
+                      <div>
+                        <span className="font-black text-xl tracking-tight bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+                          SM Online Shop
+                        </span>
+                        <span className="block text-[10px] font-bold text-pink-400 tracking-wider uppercase -mt-1">Beauty & Lifestyle</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button onClick={() => setActiveTab('shop')} className={`px-3 py-2 rounded-xl text-xs font-bold ${activeTab === 'shop' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>শপ</button>
+                    <button onClick={() => setActiveTab('wishlist')} className={`px-3 py-2 rounded-xl text-xs font-bold relative ${activeTab === 'wishlist' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>পছন্দ ({wishlist.length})</button>
+                    <button onClick={() => setActiveTab('cart')} className={`px-3 py-2 rounded-xl text-xs font-bold relative ${activeTab === 'cart' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>কার্ট ({cart.reduce((a,b)=>a+b.quantity,0)})</button>
+                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-2 rounded-xl text-xs font-bold ${activeTab === 'admin' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>অ্যাডমিন</button>
+                  </div>
+                </div>
+              </header>
+
+              {/* MAIN CONTENT */}
+              <main className="max-w-7xl mx-auto px-4 pt-6 flex-1 w-full">
+                {activeTab === 'shop' && (
+                  <div className="space-y-6">
+                    <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white p-6 sm:p-10 shadow-xl">
+                      <h1 className="text-2xl sm:text-4xl font-black">আপনার সৌন্দর্যে যোগ করুন নতুন মাত্রা! ✨</h1>
+                      <p className="text-xs sm:text-sm text-pink-100 mt-2">প্রিমিয়াম হিজাব, আবায়া ও ১০০% অরজিনাল কসমেটিকস।</p>
+                    </div>
+
+                    <div className="bg-white rounded-3xl p-6 border border-pink-100 shadow-sm text-center space-y-2">
+                      <h2 className="text-lg font-black text-gray-800">স্বাগতম SM Online Shop-এ! 🌸</h2>
+                      <p className="text-xs text-gray-600">আমরা দিচ্ছি ১০০% অরজিনাল ও প্রিমিয়াম কোয়ালিটির হিজাব, আবায়া ও কসমেটিকস।</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {filteredProducts.map(product => (
+                        <div key={product.id} className="bg-white rounded-3xl border border-pink-100 overflow-hidden shadow-sm flex flex-col justify-between">
+                          <div>
+                            <div className="aspect-square bg-pink-50 cursor-pointer overflow-hidden" onClick={() => setZoomedImage(product.image)}>
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                            </div>
+                            <div className="p-3 space-y-1">
+                              <h3 className="font-bold text-xs text-gray-800 truncate">{product.name}</h3>
+                              <p className="font-black text-rose-600 text-sm">৳{product.price}</p>
+                            </div>
+                          </div>
+                          <div className="p-3 pt-0">
+                            <button onClick={() => addToCart(product)} className="w-full bg-pink-600 text-white font-bold py-2 rounded-xl text-xs">কার্টে যোগ করুন</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'wishlist' && (
+                  <div className="max-w-xl mx-auto space-y-4">
+                    <h2 className="text-xl font-black">পছন্দের তালিকা</h2>
+                    {wishlist.length === 0 ? <p className="text-xs text-gray-500">কোনো পণ্য নেই।</p> : wishlist.map(item => (
+                      <div key={item.id} className="bg-white p-4 rounded-2xl border flex justify-between items-center">
+                        <span className="font-bold text-xs">{item.name}</span>
+                        <button onClick={() => addToCart(item)} className="bg-pink-600 text-white px-3 py-1.5 rounded-xl text-xs font-bold">কার্ট</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {activeTab === 'cart' && (
+                  <div className="max-w-xl mx-auto space-y-4 bg-white p-6 rounded-3xl border shadow-sm">
+                    <h2 className="text-xl font-black">আপনার শপিং কার্ট</h2>
+                    {cart.length === 0 ? <p className="text-xs text-gray-500">কার্ট খালি।</p> : (
+                      <div className="space-y-4">
+                        {cart.map(item => (
+                          <div key={item.id} className="flex justify-between items-center border-b pb-2 text-xs">
+                            <span>{item.name} (x{item.quantity})</span>
+                            <span className="font-black text-rose-600">৳{item.price * item.quantity}</span>
+                          </div>
+                        ))}
+                        <div className="flex justify-between font-black text-base pt-2">
+                          <span>সর্বমোট:</span>
+                          <span className="text-rose-600">৳{total}</span>
+                        </div>
+                        <button onClick={() => setCheckoutModal(true)} className="w-full bg-pink-600 text-white font-bold py-3 rounded-2xl text-xs">অর্ডার কনফার্ম করুন</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'admin' && (
+                  <div className="max-w-md mx-auto bg-white p-6 rounded-3xl border shadow-sm space-y-4">
+                    <h2 className="text-xl font-black">অ্যাডমিন লগইন</h2>
+                    {!isAdminLoggedIn ? (
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        if (adminUsername === 'SMADMIN' && adminPassword === 'SM2728' && adminPin === '5035') {
+                          setIsAdminLoggedIn(true);
+                        } else {
+                          setLoginError('ভুল তথ্য বা সিকিউরিটি পিন!');
+                        }
+                      }} className="space-y-3 text-xs">
+                        {loginError && <p className="text-rose-500 font-bold">{loginError}</p>}
+                        <input type="text" placeholder="ইউজার আইডি (SMADMIN)" value={adminUsername} onChange={e=>setAdminUsername(e.target.value)} className="w-full p-3 border rounded-xl" required />
+                        <input type="password" placeholder="পাসওয়ার্ড (SM2728)" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} className="w-full p-3 border rounded-xl" required />
+                        <input type="password" placeholder="2FA পিন (5035)" maxLength={4} value={adminPin} onChange={e=>setAdminPin(e.target.value)} className="w-full p-3 border rounded-xl text-center font-black tracking-widest" required />
+                        <button type="submit" className="w-full bg-pink-600 text-white py-3 rounded-xl font-bold">লগইন</button>
+                      </form>
+                    ) : (
+                      <div className="text-center space-y-3">
+                        <p className="text-emerald-600 font-bold text-sm">সফলভাবে লগইন হয়েছে! (Secured)</p>
+                        <button onClick={() => setIsAdminLoggedIn(false)} className="bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-xs font-bold">লগআউট</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </main>
+
+              {/* ZOOM MODAL */}
+              {zoomedImage && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50" onClick={() => setZoomedImage(null)}>
+                  <img src={zoomedImage} alt="Zoom" className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl" />
+                </div>
+              )}
+
+              {/* CHECKOUT MODAL */}
+              {checkoutModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4">
+                    <h3 className="text-lg font-black">অর্ডার ফর্ম</h3>
+                    <input type="text" placeholder="আপনার নাম" value={customerName} onChange={e=>setCustomerName(e.target.value)} className="w-full p-3 border rounded-xl text-xs" />
+                    <input type="tel" placeholder="মোবাইল নম্বর" value={customerPhone} onChange={e=>setCustomerPhone(e.target.value)} className="w-full p-3 border rounded-xl text-xs" />
+                    <textarea placeholder="ঠিকানা" value={customerAddress} onChange={e=>setCustomerAddress(e.target.value)} className="w-full p-3 border rounded-xl text-xs"></textarea>
+                    <button onClick={() => {
+                      if(!customerName || !customerPhone) { alert('নাম ও নম্বর দিন'); return; }
+                      alert('অর্ডার সফল হয়েছে!');
+                      setCheckoutModal(false);
+                      setCart([]);
+                    }} className="w-full bg-pink-600 text-white py-3 rounded-xl font-bold text-xs">অর্ডার সম্পন্ন করুন</button>
+                    <button onClick={() => setCheckoutModal(false)} className="w-full bg-gray-100 text-gray-600 py-2 rounded-xl text-xs font-bold">বন্ধ করুন</button>
+                  </div>
+                </div>
+              )}
+
+              {/* FOOTER */}
+              <footer className="bg-white border-t border-pink-100 mt-16 py-6 text-center text-xs text-gray-500 space-y-2">
+                <p>ইমেইল: <a href="mailto:smonlineshop503@gmail.com" className="text-pink-600 font-bold underline">smonlineshop503@gmail.com</a></p>
+                <p>হটলাইন: <a href="https://wa.me/8801886995687" className="text-pink-600 font-bold underline">01886995687</a></p>
+                <p>© 2026 SM Online Shop. সর্বস্বত্ব সংরক্ষিত।</p>
+                <p className="font-bold text-pink-600 uppercase pt-1">Powered By SM Group</p>
+              </footer>
+            </div>
+          );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
