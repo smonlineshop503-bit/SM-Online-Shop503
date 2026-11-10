@@ -36,7 +36,6 @@
           });
           const [searchQuery, setSearchQuery] = useState('');
           const [selectedCategory, setSelectedCategory] = useState('All');
-          const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
           const [checkoutModal, setCheckoutModal] = useState(false);
           const [orderSuccess, setOrderSuccess] = useState(false);
           const [lastOrderDetails, setLastOrderDetails] = useState(null);
@@ -52,23 +51,6 @@
           const [adminPassword, setAdminPassword] = useState('');
           const [adminPin, setAdminPin] = useState('');
           const [loginError, setLoginError] = useState('');
-
-          const [trackInput, setTrackInput] = useState('');
-          const [trackResult, setTrackResult] = useState(null);
-
-          const [isSpinning, setIsSpinning] = useState(false);
-          const [spinMessage, setSpinMessage] = useState('আপনার ডিসকাউন্ট স্পিন করতে নিচের বাটনে চাপ দিন!');
-          const [appliedCoupon, setAppliedCoupon] = useState('');
-          const [couponInput, setCouponInput] = useState('');
-          const [couponError, setCouponError] = useState('');
-          const [discountPercent, setDiscountPercent] = useState(0);
-          const [isFreeShipping, setIsFreeShipping] = useState(false);
-
-          const [isChatOpen, setIsChatOpen] = useState(false);
-          const [chatMessages, setChatMessages] = useState([
-            { sender: 'support', text: 'আসসালামু আলাইকুম! SM Online Shop-এ আপনাকে স্বাগতম। পেমেন্ট, ডেলিভারি বা স্কিনকেয়ার নিয়ে যেকোনো প্রশ্ন করতে পারেন।' }
-          ]);
-          const [chatInput, setChatInput] = useState('');
 
           const [products, setProducts] = useState([
             {
@@ -157,9 +139,8 @@
           };
 
           const subtotal = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-          const discountAmount = Math.round((subtotal * discountPercent) / 100);
-          const shipping = isFreeShipping ? 0 : (subtotal > 0 ? 120 : 0);
-          const total = Math.max(0, subtotal - discountAmount + shipping);
+          const shipping = subtotal > 0 ? 120 : 0;
+          const total = subtotal + shipping;
 
           const filteredProducts = products.filter(product => {
             const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -170,33 +151,31 @@
           return (
             <div className="min-h-screen flex flex-col justify-between">
               {/* HEADER */}
-              <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-pink-100 shadow-sm">
-                <div className="max-w-7xl mx-auto px-4 py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div onClick={() => setActiveTab('shop')} className="cursor-pointer flex items-center gap-2">
-                      <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white font-black flex items-center justify-center text-lg shadow-md">
-                        SM
-                      </div>
-                      <div>
-                        <span className="font-black text-xl tracking-tight bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
-                          SM Online Shop
-                        </span>
-                        <span className="block text-[10px] font-bold text-pink-400 tracking-wider uppercase -mt-1">Beauty & Lifestyle</span>
-                      </div>
+              <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-pink-100 shadow-sm">
+                <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div onClick={() => setActiveTab('shop')} className="cursor-pointer flex items-center gap-2.5">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 to-rose-500 text-white font-black flex items-center justify-center text-xl shadow-md">
+                      SM
+                    </div>
+                    <div>
+                      <span className="font-black text-lg tracking-tight bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+                        SM Online Shop
+                      </span>
+                      <span className="block text-[10px] font-bold text-pink-400 tracking-wider uppercase -mt-1">Beauty & Lifestyle</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <button onClick={() => setActiveTab('shop')} className={`px-3 py-2 rounded-xl text-xs font-bold ${activeTab === 'shop' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>শপ</button>
-                    <button onClick={() => setActiveTab('wishlist')} className={`px-3 py-2 rounded-xl text-xs font-bold relative ${activeTab === 'wishlist' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>পছন্দ ({wishlist.length})</button>
-                    <button onClick={() => setActiveTab('cart')} className={`px-3 py-2 rounded-xl text-xs font-bold relative ${activeTab === 'cart' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>কার্ট ({cart.reduce((a,b)=>a+b.quantity,0)})</button>
-                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-2 rounded-xl text-xs font-bold ${activeTab === 'admin' ? 'bg-pink-600 text-white' : 'bg-pink-50 text-pink-600'}`}>অ্যাডমিন</button>
+                  <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto w-full sm:w-auto justify-center pb-1 sm:pb-0">
+                    <button onClick={() => setActiveTab('shop')} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'shop' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 text-pink-600'}`}>শপ</button>
+                    <button onClick={() => setActiveTab('wishlist')} className={`px-3 py-1.5 rounded-xl text-xs font-bold relative transition-all ${activeTab === 'wishlist' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 text-pink-600'}`}>পছন্দ ({wishlist.length})</button>
+                    <button onClick={() => setActiveTab('cart')} className={`px-3 py-1.5 rounded-xl text-xs font-bold relative transition-all ${activeTab === 'cart' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 text-pink-600'}`}>কার্ট ({cart.reduce((a,b)=>a+b.quantity,0)})</button>
+                    <button onClick={() => setActiveTab('admin')} className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${activeTab === 'admin' ? 'bg-pink-600 text-white shadow' : 'bg-pink-50 text-pink-600'}`}>অ্যাডমিন</button>
                   </div>
                 </div>
               </header>
 
               {/* MAIN CONTENT */}
-              <main className="max-w-7xl mx-auto px-4 pt-6 flex-1 w-full">
+              <main className="max-w-7xl mx-auto px-4 pt-6 flex-1 w-full space-y-6">
                 {activeTab === 'shop' && (
                   <div className="space-y-6">
                     <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white p-6 sm:p-10 shadow-xl">
@@ -311,7 +290,7 @@
                       alert('অর্ডার সফল হয়েছে!');
                       setCheckoutModal(false);
                       setCart([]);
-                    }} className="w-full bg-pink-600 text-white py-3 rounded-xl font-bold text-xs">অর্ডার সম্পন্ন করুন</button>
+                    }} className="w-full bg-pink-600 text-white font-bold py-3 rounded-xl text-xs">অর্ডার সম্পন্ন করুন</button>
                     <button onClick={() => setCheckoutModal(false)} className="w-full bg-gray-100 text-gray-600 py-2 rounded-xl text-xs font-bold">বন্ধ করুন</button>
                   </div>
                 </div>
